@@ -5,7 +5,11 @@ from bs4 import BeautifulSoup
 import ssl
 import threading
 import threading
+import rstr
+import re
+import time
 
+from helpers import generate_url 
 
 class Crawler(threading.Thread):
     def __init__(self,base_url, links_to_crawl,have_visited, error_links,url_lock, reviews):
@@ -65,10 +69,10 @@ class Crawler(threading.Thread):
                 try:
                     req = Request(link, headers= {'User-Agent': 'Mozilla/5.0'})
 
-                    #response = urlopen(req, context=my_ssl)
-                    response = requests.get(link)
+                    response = urlopen(req, context=my_ssl)
+                    #response = requests.get(link)
 
-                    soup = BeautifulSoup(response.text,"html.parser")
+                    soup = BeautifulSoup(response.read(),"html.parser")
                     
                     reviews_html = soup.find_all('div', class_="mainReviews")
                     
@@ -91,12 +95,11 @@ class Crawler(threading.Thread):
                         self.have_visited.add(link)
                     else:
                         print("No reviews!")
-                        new_sort_key = rstr.xeger(r'cm[A-Z]\d[a-z][A-Z][A-Z]\d[a-z]\d[A-Z][a-z][a-z][A-Z][a-z]\d[a-z][A-Z][A-Z][a-z][A-Z]\d[A-Z][a-z][a-z]\d[A-Z]')
-                        new_link = re.sub("sort=(.*?)=", new_sort_key, link)
-                        print(f"New Link {new_link}")
-                        self.links_to_crawl.put(link)
-                        
-                        
+                        new_url = generate_url(link)
+                        if "pid" not in new_url:
+                            print(f"NEW: {new_url} OLD: {link}")
+                        else:
+                            self.links_to_crawl.put(new_url)
                         
                 except URLError as e:
                     print(f"URL {link} threw this error {e.reason} while trying to parse")
@@ -110,5 +113,4 @@ class Crawler(threading.Thread):
                     self.links_to_crawl.task_done()
 
             if self.links_to_crawl.qsize() == 0:
-                self.links_to_crawl.task_done()
                 break

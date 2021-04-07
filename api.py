@@ -15,8 +15,6 @@ from helpers import generate_pages
 app = FastAPI()
 
 
-
-
 @app.get("/", response_model=List[Review])
 def read_root(*, base_url:str, number_of_threads: int = 25):
     print("The Crawler is started")
@@ -47,8 +45,6 @@ def read_root(*, base_url:str, number_of_threads: int = 25):
 
     for crawler in crawler_threads:
         crawler.join()
-
-
 
     print(f"Total Number of pages visited are {len(have_visited)}")
     print(f"Total Number of Errornous links: {len(error_links)}")
