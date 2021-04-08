@@ -5,6 +5,8 @@ import requests
 import time
 
 from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
+
 from typing import List, Optional
 
 from schemas import Reviews
@@ -36,8 +38,7 @@ def read_root(*, base_url:str, number_of_threads: int = 10):
     crawler_threads = []
     error_links = []
     reviews = read_from_cache(base_url)
-    print(total_reviews)
-    print(len(reviews))
+
     if (int(total_reviews) <= len(reviews)):
         #If amount of reviews in cache equals the amount
         #of reviews on site we are loading them from cache
@@ -45,6 +46,10 @@ def read_root(*, base_url:str, number_of_threads: int = 10):
 
     reviews = []
 
+    if (links_to_crawl.qsize() < number_of_threads):
+        number_of_threads = links_to_crawl.qsize()
+        print(f"New number of threads = {number_of_threads}")
+    
     for i in range(int(number_of_threads)):
         crawler = Crawler(base_url = base_url, 
                         links_to_crawl= links_to_crawl, 
@@ -66,3 +71,5 @@ def read_root(*, base_url:str, number_of_threads: int = 10):
     save_cache(base_url, reviews)
     print("--- %s seconds ---" % (time.time() - start_time))
     return Reviews(total=len(reviews), reviews=reviews)
+
+client = TestClient(app)
