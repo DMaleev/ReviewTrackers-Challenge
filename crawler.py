@@ -80,22 +80,25 @@ class Crawler(threading.Thread):
                         for review in reviews_html:
                             title = review.find('p', class_="reviewTitle").getText()
                             text = review.find('p', class_="reviewText").getText()
-                            consumerName = ' '.join(review.find('p', class_="consumerName").getText().split())
-                            consumerReviewDate = review.find('p', class_="consumerReviewDate").getText()
-
-                            self.reviews.append({
+                            consumerData = ' '.join(review.find('p', class_="consumerName").getText().split())
+                            consumerReviewDate = review.find('p', class_="consumerReviewDate").getText().replace('Reviewed in ', '')
+                            stars = int(review.find('div', class_="numRec").getText().split(' of ')[0].replace('(', ''))
+                            review = {
                                 'title':title,
                                 'text':text,
-                                'consumerName':consumerName,
-                                'consumerReviewDate':consumerReviewDate
+                                'consumerName':consumerData.split(' from ')[0],
+                                'consumerFrom':consumerData.split(' from ')[1],
+                                'consumerReviewDate':consumerReviewDate,
+                                'stars': stars
                             }
-                            )
+                            self.reviews.append(review)
                             print("new review " + str(len(self.reviews)))
 
                         self.have_visited.add(link)
                     else:
                         print("No reviews!")
                         new_url = generate_url(link)
+                        time.sleep(15)
                         if "pid" not in new_url:
                             print(f"NEW: {new_url} OLD: {link}")
                         else:
